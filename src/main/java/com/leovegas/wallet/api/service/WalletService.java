@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 
-import javax.naming.InsufficientResourcesException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -41,7 +39,7 @@ public class WalletService {
 
 	@Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE, rollbackFor = WalletException.class)
 	public AccountDTO accountTransactions(Long accountId, TransactionRequest transactionRequest)
-			throws WalletException, InsufficientResourcesException {
+			throws WalletException {
 		Optional<Account> account = accountRepository.findById(accountId);
 		AccountDTO accountDTO = null;
 		Transaction createdTransaction = null;
@@ -57,7 +55,7 @@ public class WalletService {
 					if (Long.sum(account.get().getBalance(), -(transactionRequest.getAmount())) >= 0) {
 						createdTransaction = createTransactionRequest(transactionRequest, account.get());
 					} else {
-						throw new InsufficientResourcesException("Insufficient Fund To Operate");
+						throw new WalletException("110003");
 					}
 				}
 			}
@@ -75,11 +73,11 @@ public class WalletService {
 				createdTransaction.setStatus(WalletConstant.FAILED);
 				createdTransaction.setCreatedDate(new Date());
 				transactionRepository.save(createdTransaction);
-				throw new WalletException();
+				throw new WalletException("110005");
 			}
 
 		} else {
-			throw new WalletException();
+			throw new WalletException("110007");
 		}
 		return accountDTO;
 	}
@@ -90,7 +88,7 @@ public class WalletService {
 		if (player.isPresent()) {
 			playerDTO = convertPlayerDomainToPlayerDTO(player.get());
 		} else {
-			throw new WalletException();
+			throw new WalletException("110004");
 		}
 		return playerDTO;
 	}
@@ -129,7 +127,7 @@ public class WalletService {
 			playerDTO.setName(savedplayer.getName());
 			playerDTO.setSex(savedplayer.getSex());
 		} catch (Exception e) {
-			throw new WalletException();
+			throw new WalletException("110008");
 		}
 		return playerDTO;
 	}

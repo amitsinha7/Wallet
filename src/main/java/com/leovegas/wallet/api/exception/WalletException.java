@@ -8,6 +8,11 @@ public class WalletException extends Exception {
 		super();
 	}
 
+
+	public WalletException(String message) {
+		super(message);
+	}
+
 	public WalletException(Exception e) {
 		super(e);
 	}

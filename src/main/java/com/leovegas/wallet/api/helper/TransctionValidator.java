@@ -22,7 +22,7 @@ public class TransctionValidator {
 				|| transactionRequest.getTransactionType() == null
 				|| !(transactionRequest.getTransactionType().equalsIgnoreCase("C")
 						|| transactionRequest.getTransactionType().equalsIgnoreCase("D"))) {
-			errors.reject(WalletConstant.WifiServiceError.TRANSACTIONREQUESTMISSING.name());
+			errors.reject(WalletConstant.TRANSACTIONREQUESTMISSING);
 		}
 	}
 

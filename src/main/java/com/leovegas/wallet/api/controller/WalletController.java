@@ -3,8 +3,6 @@ package com.leovegas.wallet.api.controller;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.naming.InsufficientResourcesException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.leovegas.wallet.api.constant.WalletConstant;
 import com.leovegas.wallet.api.exception.WalletException;
 import com.leovegas.wallet.api.helper.TransctionValidator;
 import com.leovegas.wallet.api.helper.Utils;
@@ -49,11 +46,11 @@ public class WalletController {
 			walletResponseDTO.setAccountDTO(playerDTO.getAccountDTO());
 		} catch (WalletException ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.WalletException));
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo(ex.getMessage()));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.EXPECTATION_FAILED);
 		} catch (Exception ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.SOMETHING_WENT_WRONG));
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo(ex.getMessage()));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.OK);
@@ -68,11 +65,11 @@ public class WalletController {
 			walletResponseDTO.setTransactionDTOs(playerDTO.getAccountDTO().getTransactionDTOs());
 		} catch (WalletException ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.WalletException));
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo(ex.getMessage()));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.EXPECTATION_FAILED);
 		} catch (Exception ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.SOMETHING_WENT_WRONG));
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo(ex.getMessage()));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.OK);
@@ -86,25 +83,19 @@ public class WalletController {
 		try {
 			transctionValidator.validateRequest(transactionRequest, validationErrors, playerId);
 			if (validationErrors.hasErrors()) {
-				walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.MALFORMED_REQUEST));
+				walletResponseDTO.setErrorInfo(utils.getErrorInfo("110002"));
 				return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.BAD_REQUEST);
 			} else {
 				AccountDTO accountDTO = walletService.accountTransactions(playerId, transactionRequest);
 				walletResponseDTO.setAccountDTO(accountDTO);
 			}
-		} catch (InsufficientResourcesException irx) {
-			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, irx);
-			walletResponseDTO
-					.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.InsufficientFundException));
-			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INSUFFICIENT_STORAGE);
 		} catch (WalletException ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-
-			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.WalletException));
-			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.EXPECTATION_FAILED);
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo(ex.getMessage()));
+			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INSUFFICIENT_STORAGE);
 		} catch (Exception ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.SOMETHING_WENT_WRONG));
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo(ex.getMessage()));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.OK);
@@ -118,7 +109,7 @@ public class WalletController {
 			PlayerDTO playerDTO = walletService.createPlayer(playerRequest);
 			walletResponseDTO.setPlayerDTO(playerDTO);
 		} catch (Exception ex) {
-			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.MALFORMED_REQUEST));
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo("110002"));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.BAD_REQUEST);
 		}
 		return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.OK);
