@@ -1,11 +1,35 @@
-version: '3.1'
-
+#Postgres
+version: "3"
 services:
-
-  db:
-    image: postgres
-    restart: always
+  postgres:
+    image: postgres:latest
+    network_mode: bridge
+    container_name: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    expose:
+    - 5432
     ports:
-      - "5432:5432"
+      - 5432:5432
     environment:
-      POSTGRES_PASSWORD: password
+         - POSTGRES_PASSWORD=postgres
+         - POSTGRES_USER=postgres
+         - POSTGRES_DB=postgres
+    restart: unless-stopped
+    
+# APP*****************************************
+  wallet:
+    image: wallet:latest
+    network_mode: bridge
+    container_name: wallet
+    expose:
+      - 8085
+    ports:
+      - 8085:8080
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    links:
+      - postgres
+volumes:
+  postgres-data:
