@@ -18,9 +18,9 @@ public class TransactionDTO implements Serializable {
 	
 	private String reference;
 
-	private AccountDTO account;
+	private AccountDTO accountDTO;
 
-	private PlayerDTO player;
+	private PlayerDTO playerDTO;
 
 	private Long accountTransactionId;
 
@@ -67,22 +67,6 @@ public class TransactionDTO implements Serializable {
 		this.type = type;
 	}
 
-	public AccountDTO getAccount() {
-		return this.account;
-	}
-
-	public void setAccount(AccountDTO account) {
-		this.account = account;
-	}
-
-	public PlayerDTO getPlayer() {
-		return this.player;
-	}
-
-	public void setPlayer(PlayerDTO player) {
-		this.player = player;
-	}
-
 	public Long getAccountTransactionId() {
 		return accountTransactionId;
 	}
@@ -99,4 +83,19 @@ public class TransactionDTO implements Serializable {
 		this.reference = reference;
 	}
 
+	public AccountDTO getAccountDTO() {
+		return accountDTO;
+	}
+
+	public void setAccountDTO(AccountDTO accountDTO) {
+		this.accountDTO = accountDTO;
+	}
+
+	public PlayerDTO getPlayerDTO() {
+		return playerDTO;
+	}
+
+	public void setPlayerDTO(PlayerDTO playerDTO) {
+		this.playerDTO = playerDTO;
+	}
 }

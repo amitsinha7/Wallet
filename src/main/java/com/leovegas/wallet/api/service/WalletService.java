@@ -81,7 +81,7 @@ public class WalletService {
 				transactionRepository.save(createdTransaction);
 				savedAccount.addTransaction(createdTransaction);
 				accountDTO = convertAccountDomainToAccountDTO(savedAccount);
-				
+
 			} catch (Exception e) {
 				createdTransaction.setStatus(WalletConstant.FAILED);
 				createdTransaction.setCreatedDate(new Date());
@@ -127,8 +127,8 @@ public class WalletService {
 	private WalletResponseDTO convertWalletResponseDTOFromPlayerDTO(PlayerDTO playerDTO) {
 		WalletResponseDTO walletResponseDTO = new WalletResponseDTO();
 		walletResponseDTO.setPlayerDTO(playerDTO);
-		walletResponseDTO.setAccountDTO(playerDTO.getAccount());
-		walletResponseDTO.setTransactionDTOs(playerDTO.getTransactions());
+		walletResponseDTO.setAccountDTO(playerDTO.getAccountDTO());
+		walletResponseDTO.setTransactionDTOs(playerDTO.getTransactionDTOs());
 		return walletResponseDTO;
 	}
 
@@ -144,7 +144,8 @@ public class WalletService {
 		playerDTO.setName(player.getName());
 		playerDTO.setSex(player.getSex());
 		playerDTO.setCreatedDate(player.getCreatedDate());
-		playerDTO.setAccount(convertAccountDomainToAccountDTO(player.getAccount()));
+		playerDTO.setAccountDTO(convertAccountDomainToAccountDTO(player.getAccount()));
+		playerDTO.setTransactionDTOs(playerDTO.getAccountDTO().getTransactionDTOs());
 		return playerDTO;
 	}
 
@@ -157,7 +158,7 @@ public class WalletService {
 		for (Transaction transaction : account.getTransactions()) {
 			transactionDTOs.add(convertTransactionDomainToTransactionDTO(transaction));
 		}
-		accountDTO.setTransactions(transactionDTOs);
+		accountDTO.setTransactionDTOs(transactionDTOs);
 		return accountDTO;
 	}
 

@@ -13,9 +13,9 @@ public class AccountDTO implements Serializable {
 
 	private Date createdDate;
 
-	private PlayerDTO player;
+	private PlayerDTO playerDTO;
 
-	private List<TransactionDTO> transactions;
+	private List<TransactionDTO> transactionDTOs;
 
 	public AccountDTO() {
 	}
@@ -44,20 +44,20 @@ public class AccountDTO implements Serializable {
 		this.createdDate = createdDate;
 	}
 
-	public PlayerDTO getPlayer() {
-		return this.player;
+	public PlayerDTO getPlayerDTO() {
+		return playerDTO;
 	}
 
-	public void setPlayer(PlayerDTO player) {
-		this.player = player;
+	public void setPlayerDTO(PlayerDTO playerDTO) {
+		this.playerDTO = playerDTO;
 	}
 
-	public List<TransactionDTO> getTransactions() {
-		return this.transactions;
+	public List<TransactionDTO> getTransactionDTOs() {
+		return transactionDTOs;
 	}
 
-	public void setTransactions(List<TransactionDTO> transactions) {
-		this.transactions = transactions;
+	public void setTransactionDTOs(List<TransactionDTO> transactionDTOs) {
+		this.transactionDTOs = transactionDTOs;
 	}
 
 }

@@ -15,9 +15,9 @@ public class PlayerDTO implements Serializable {
 
 	private String sex;
 
-	private AccountDTO account;
+	private AccountDTO accountDTO;
 
-	private List<TransactionDTO> transactions;
+	private List<TransactionDTO> transactionDTOs;
 
 	public PlayerDTO() {
 	}
@@ -54,20 +54,20 @@ public class PlayerDTO implements Serializable {
 		this.sex = sex;
 	}
 
-	public AccountDTO getAccount() {
-		return account;
+	public AccountDTO getAccountDTO() {
+		return accountDTO;
 	}
 
-	public void setAccount(AccountDTO account) {
-		this.account = account;
+	public void setAccountDTO(AccountDTO accountDTO) {
+		this.accountDTO = accountDTO;
 	}
 
-	public List<TransactionDTO> getTransactions() {
-		return this.transactions;
+	public List<TransactionDTO> getTransactionDTOs() {
+		return transactionDTOs;
 	}
 
-	public void setTransactions(List<TransactionDTO> transactions) {
-		this.transactions = transactions;
+	public void setTransactionDTOs(List<TransactionDTO> transactionDTOs) {
+		this.transactionDTOs = transactionDTOs;
 	}
 
 }
