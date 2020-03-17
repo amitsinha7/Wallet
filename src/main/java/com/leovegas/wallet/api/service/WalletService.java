@@ -20,11 +20,11 @@ import com.leovegas.wallet.api.exception.WalletException;
 import com.leovegas.wallet.api.repository.AccountRepository;
 import com.leovegas.wallet.api.repository.PlayerRepository;
 import com.leovegas.wallet.api.repository.TransactionRepository;
+import com.leovegas.wallet.api.request.dto.PlayerRequest;
 import com.leovegas.wallet.api.request.dto.TransactionRequest;
 import com.leovegas.wallet.api.response.dto.AccountDTO;
 import com.leovegas.wallet.api.response.dto.PlayerDTO;
 import com.leovegas.wallet.api.response.dto.TransactionDTO;
-import com.leovegas.wallet.api.response.dto.WalletResponseDTO;
 
 @Service
 @Transactional
@@ -39,19 +39,8 @@ public class WalletService {
 	@Autowired
 	AccountRepository accountRepository;
 
-	public WalletResponseDTO findPlayerById(Long id) throws WalletException {
-		Optional<Player> player = playerRepository.findById(id);
-		PlayerDTO playerDTO = null;
-		if (player.isPresent()) {
-			playerDTO = convertPlayerDomainToPlayerDTO(player.get());
-		} else {
-			throw new WalletException();
-		}
-		return convertWalletResponseDTOFromPlayerDTO(playerDTO);
-	}
-
 	@Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE, rollbackFor = WalletException.class)
-	public WalletResponseDTO accountTransactions(Long accountId, TransactionRequest transactionRequest)
+	public AccountDTO accountTransactions(Long accountId, TransactionRequest transactionRequest)
 			throws WalletException, InsufficientResourcesException {
 		Optional<Account> account = accountRepository.findById(accountId);
 		AccountDTO accountDTO = null;
@@ -92,25 +81,57 @@ public class WalletService {
 		} else {
 			throw new WalletException();
 		}
-		return convertWalletResponseDTOFromAccountDTO(accountDTO);
+		return accountDTO;
 	}
 
-	public Player createPlayer(Player player) {
-		return playerRepository.save(player);
-	}
-
-	public Account createAccount(Account account) throws Exception {
-		if (account != null && account.getPlayer() != null && account.getPlayer().getId() != null) {
-
-			Optional<Player> player = playerRepository.findById(account.getPlayer().getId());
-			if (player.isPresent()) {
-				throw new Exception();
-			} else {
-				return accountRepository.save(account);
-			}
+	public PlayerDTO findPlayerById(Long id) throws WalletException {
+		Optional<Player> player = playerRepository.findById(id);
+		PlayerDTO playerDTO = null;
+		if (player.isPresent()) {
+			playerDTO = convertPlayerDomainToPlayerDTO(player.get());
 		} else {
-			throw new Exception();
+			throw new WalletException();
 		}
+		return playerDTO;
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE, rollbackFor = WalletException.class)
+	public PlayerDTO createPlayer(PlayerRequest playerRequest) throws WalletException {
+		PlayerDTO playerDTO = new PlayerDTO();
+		try {
+
+			Player player = new Player();
+			player.setSex(playerRequest.getSex());
+			player.setName(playerRequest.getName());
+			player.setCreatedDate(new Date());
+			Player savedplayer = playerRepository.save(player);
+			Account account = new Account();
+			account.setBalance(playerRequest.getBalance());
+			account.setCreatedDate(new Date());
+			account.setPlayer(savedplayer);
+			Account savedAccount = accountRepository.save(account);
+			TransactionRequest transactionRequest = new TransactionRequest();
+			transactionRequest.setAccountTransactionId(playerRequest.getAccountTransactionId());
+			transactionRequest.setAmount(playerRequest.getBalance());
+			transactionRequest.setReference("Credit");
+			transactionRequest.setTransactionType(WalletConstant.CREDIT);
+			Transaction createdTransaction = createTransactionRequest(transactionRequest, savedAccount);
+			createdTransaction.setStatus(WalletConstant.SUCCESS);
+			createdTransaction.setCreatedDate(new Date());
+			Transaction savedTransaction = transactionRepository.save(createdTransaction);
+			Account savedAccountAfterTransaction = savedTransaction.getAccount();
+			ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+			transactions.add(savedTransaction);
+			savedAccountAfterTransaction.setTransactions(transactions);
+			playerDTO.setAccountDTO(convertAccountDomainToAccountDTO(savedAccountAfterTransaction));
+			playerDTO.setCreatedDate(savedplayer.getCreatedDate());
+			playerDTO.setId(savedplayer.getId());
+			playerDTO.setName(savedplayer.getName());
+			playerDTO.setSex(savedplayer.getSex());
+		} catch (Exception e) {
+			throw new WalletException();
+		}
+		return playerDTO;
 	}
 
 	private Transaction createTransactionRequest(TransactionRequest transactionRequest, Account account) {
@@ -124,20 +145,6 @@ public class WalletService {
 		return transaction;
 	}
 
-	private WalletResponseDTO convertWalletResponseDTOFromPlayerDTO(PlayerDTO playerDTO) {
-		WalletResponseDTO walletResponseDTO = new WalletResponseDTO();
-		walletResponseDTO.setPlayerDTO(playerDTO);
-		walletResponseDTO.setAccountDTO(playerDTO.getAccountDTO());
-		walletResponseDTO.setTransactionDTOs(playerDTO.getTransactionDTOs());
-		return walletResponseDTO;
-	}
-
-	private WalletResponseDTO convertWalletResponseDTOFromAccountDTO(AccountDTO accountDTO) {
-		WalletResponseDTO walletResponseDTO = new WalletResponseDTO();
-		walletResponseDTO.setAccountDTO(accountDTO);
-		return walletResponseDTO;
-	}
-
 	private PlayerDTO convertPlayerDomainToPlayerDTO(Player player) {
 		PlayerDTO playerDTO = new PlayerDTO();
 		playerDTO.setId(player.getId());
@@ -145,7 +152,6 @@ public class WalletService {
 		playerDTO.setSex(player.getSex());
 		playerDTO.setCreatedDate(player.getCreatedDate());
 		playerDTO.setAccountDTO(convertAccountDomainToAccountDTO(player.getAccount()));
-		playerDTO.setTransactionDTOs(playerDTO.getAccountDTO().getTransactionDTOs());
 		return playerDTO;
 	}
 
@@ -155,10 +161,12 @@ public class WalletService {
 		accountDTO.setId(account.getId());
 		accountDTO.setCreatedDate(account.getCreatedDate());
 		ArrayList<TransactionDTO> transactionDTOs = new ArrayList<TransactionDTO>();
-		for (Transaction transaction : account.getTransactions()) {
-			transactionDTOs.add(convertTransactionDomainToTransactionDTO(transaction));
+		if (account.getTransactions() != null) {
+			for (Transaction transaction : account.getTransactions()) {
+				transactionDTOs.add(convertTransactionDomainToTransactionDTO(transaction));
+			}
+			accountDTO.setTransactionDTOs(transactionDTOs);
 		}
-		accountDTO.setTransactionDTOs(transactionDTOs);
 		return accountDTO;
 	}
 

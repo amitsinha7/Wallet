@@ -16,12 +16,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.leovegas.wallet.api.constant.WalletConstant;
-import com.leovegas.wallet.api.entity.Account;
-import com.leovegas.wallet.api.entity.Player;
 import com.leovegas.wallet.api.exception.WalletException;
 import com.leovegas.wallet.api.helper.TransctionValidator;
 import com.leovegas.wallet.api.helper.Utils;
+import com.leovegas.wallet.api.request.dto.PlayerRequest;
 import com.leovegas.wallet.api.request.dto.TransactionRequest;
+import com.leovegas.wallet.api.response.dto.AccountDTO;
+import com.leovegas.wallet.api.response.dto.PlayerDTO;
 import com.leovegas.wallet.api.response.dto.WalletResponseDTO;
 import com.leovegas.wallet.api.service.WalletService;
 
@@ -42,13 +43,12 @@ public class WalletController {
 	@RequestMapping(value = "/player/{id}/accountinfo", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
 	public ResponseEntity<WalletResponseDTO> getPlayerAccountBalance(@PathVariable("id") Long id) {
 
-		WalletResponseDTO walletResponseDTORes = new WalletResponseDTO();
-		WalletResponseDTO walletResponseDTO = null;
+		WalletResponseDTO walletResponseDTO = new WalletResponseDTO();
 		try {
-			walletResponseDTO = walletService.findPlayerById(id);
+			PlayerDTO playerDTO = walletService.findPlayerById(id);
+			walletResponseDTO.setAccountDTO(playerDTO.getAccountDTO());
 		} catch (WalletException ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO = new WalletResponseDTO();
 			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.WalletException));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.EXPECTATION_FAILED);
 		} catch (Exception ex) {
@@ -56,20 +56,18 @@ public class WalletController {
 			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.SOMETHING_WENT_WRONG));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		walletResponseDTORes.setAccountDTO(walletResponseDTO.getAccountDTO());
-		return new ResponseEntity<WalletResponseDTO>(walletResponseDTORes, HttpStatus.OK);
+		return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.OK);
 	}
 
 	// Transaction history per player
 	@RequestMapping(value = "/player/{id}/transactionsinfo", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
 	public ResponseEntity<WalletResponseDTO> getPlayerTransactions(@PathVariable("id") Long id) {
-		WalletResponseDTO walletResponseDTO = null;
-		WalletResponseDTO walletResponseDTORes = new WalletResponseDTO();
+		WalletResponseDTO walletResponseDTO = new WalletResponseDTO();
 		try {
-			walletResponseDTO = walletService.findPlayerById(id);
+			PlayerDTO playerDTO = walletService.findPlayerById(id);
+			walletResponseDTO.setTransactionDTOs(playerDTO.getAccountDTO().getTransactionDTOs());
 		} catch (WalletException ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO = new WalletResponseDTO();
 			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.WalletException));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.EXPECTATION_FAILED);
 		} catch (Exception ex) {
@@ -77,33 +75,31 @@ public class WalletController {
 			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.SOMETHING_WENT_WRONG));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		walletResponseDTORes.setTransactionDTOs(walletResponseDTO.getTransactionDTOs());
-		return new ResponseEntity<WalletResponseDTO>(walletResponseDTORes, HttpStatus.OK);
+		return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.OK);
 	}
 
 	// Credit And Withdrawal per player
 	@RequestMapping(value = "/player/{id}/transactions", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
 	public ResponseEntity<WalletResponseDTO> playerAccountCredit(@PathVariable("id") Long playerId,
 			@RequestBody TransactionRequest transactionRequest, BindingResult validationErrors) {
-		WalletResponseDTO walletResponseDTO = null;
+		WalletResponseDTO walletResponseDTO = new WalletResponseDTO();
 		try {
 			transctionValidator.validateRequest(transactionRequest, validationErrors, playerId);
 			if (validationErrors.hasErrors()) {
-				walletResponseDTO = new WalletResponseDTO();
 				walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.MALFORMED_REQUEST));
 				return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.BAD_REQUEST);
 			} else {
-				walletResponseDTO = walletService.accountTransactions(playerId, transactionRequest);
+				AccountDTO accountDTO = walletService.accountTransactions(playerId, transactionRequest);
+				walletResponseDTO.setAccountDTO(accountDTO);
 			}
 		} catch (InsufficientResourcesException irx) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, irx);
-			walletResponseDTO = new WalletResponseDTO();
 			walletResponseDTO
 					.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.InsufficientFundException));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.INSUFFICIENT_STORAGE);
 		} catch (WalletException ex) {
 			Logger.getLogger(WalletController.class.getName()).log(Level.SEVERE, null, ex);
-			walletResponseDTO = new WalletResponseDTO();
+
 			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.WalletException));
 			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.EXPECTATION_FAILED);
 		} catch (Exception ex) {
@@ -116,25 +112,15 @@ public class WalletController {
 
 	// Create Player
 	@RequestMapping(value = "/player/create", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-	public ResponseEntity<Player> createPlayer(@RequestBody Player playerRequest) {
-		Player player = null;
+	public ResponseEntity<WalletResponseDTO> createPlayer(@RequestBody PlayerRequest playerRequest) {
+		WalletResponseDTO walletResponseDTO = new WalletResponseDTO();
 		try {
-			player = walletService.createPlayer(playerRequest);
+			PlayerDTO playerDTO = walletService.createPlayer(playerRequest);
+			walletResponseDTO.setPlayerDTO(playerDTO);
 		} catch (Exception ex) {
-			return new ResponseEntity<Player>(player, HttpStatus.BAD_REQUEST);
+			walletResponseDTO.setErrorInfo(utils.getErrorInfo(WalletConstant.WifiServiceError.MALFORMED_REQUEST));
+			return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.BAD_REQUEST);
 		}
-		return new ResponseEntity<Player>(player, HttpStatus.OK);
-	}
-
-	// Create Account
-	@RequestMapping(value = "/account/create", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-	public ResponseEntity<Account> createAccount(@RequestBody Account accountRequest) {
-		Account account = null;
-		try {
-			account = walletService.createAccount(accountRequest);
-		} catch (Exception ex) {
-			return new ResponseEntity<Account>(account, HttpStatus.BAD_REQUEST);
-		}
-		return new ResponseEntity<Account>(account, HttpStatus.OK);
+		return new ResponseEntity<WalletResponseDTO>(walletResponseDTO, HttpStatus.OK);
 	}
 }
